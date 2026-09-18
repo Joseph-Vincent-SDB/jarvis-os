@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS OS, a case study</title>
+<meta name="description" content="A self-hosted, multi-agent AI operating system for one person's life, and the job-search pipeline that grew inside it. Seventeen agents, a control model that never acts on the world without a human, zero API spend.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F8; --card:#FFFFFF; --ink:#131A24; --ink-2:#4B5563; --ink-3:#7A8391;
+  --rule:#D5DBE3; --steel:#2F5D8A; --steel-soft:#E3ECF5; --amber:#B86E00; --amber-soft:#FBEFD9;
+  --green:#2E7D5B; --green-soft:#E1F1EA; --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --display:"Bricolage Grotesque",var(--sans);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F141B; --card:#161D26; --ink:#E8ECF1; --ink-2:#B5BDC8; --ink-3:#7F8896; --rule:#28313D;
+    --steel:#7FA9D6; --steel-soft:#1B2A3B; --amber:#E0A040; --amber-soft:#3A2A10; --green:#6FC39B; --green-soft:#16302A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F141B; --card:#161D26; --ink:#E8ECF1; --ink-2:#B5BDC8; --ink-3:#7F8896; --rule:#28313D;
+  --steel:#7FA9D6; --steel-soft:#1B2A3B; --amber:#E0A040; --amber-soft:#3A2A10; --green:#6FC39B; --green-soft:#16302A;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} .chip{animation:none!important;opacity:1!important;transform:none!important} }
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--steel);text-decoration-thickness:1px;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+.mono{font-family:var(--mono);font-size:.8rem;letter-spacing:.01em}
+.eyebrow{font-family:var(--mono);font-size:.74rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.09em}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.01em;line-height:1.08;margin:0}
+h2{font-size:clamp(1.7rem,3.2vw,2.4rem);margin:.35rem 0 1.2rem}
+h3{font-size:1.2rem;font-weight:600;margin:1.6rem 0 .5rem}
+p{margin:.6rem 0}
+.lede{font-size:1.12rem;color:var(--ink-2);max-width:62ch}
+section{padding:3.8rem 0;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0}
+
+/* header */
+header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:1rem}
+.brand{font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.02em;color:var(--ink);text-decoration:none}
+nav a{font-family:var(--mono);font-size:.76rem;color:var(--ink-2);text-decoration:none;margin-left:1.1rem}
+nav a:hover{color:var(--steel)}
+@media (max-width:720px){ nav a:not(.gh){display:none} }
+
+/* hero */
+.hero{padding:4.4rem 0 3rem}
+.hero h1{font-size:clamp(2.2rem,5.6vw,4.3rem);max-width:19ch}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero .lede{margin-top:1.3rem}
+.hero .who{margin-top:1rem;font-family:var(--mono);font-size:.8rem;color:var(--ink-3)}
+
+/* the gate */
+.gate{margin-top:2.6rem;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:720px){ .gate{grid-template-columns:1fr} }
+.tier{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 14px;position:relative}
+.tier .t-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.35rem}
+.tier .t-name{font-family:var(--display);font-weight:600;font-size:1.05rem}
+.tier .t-count{font-family:var(--mono);font-size:.78rem;color:var(--ink-3)}
+.tier .t-rule{font-size:.86rem;color:var(--ink-2);margin:0 0 .8rem;min-height:2.6em}
+.tier.g{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.tier.g .t-name{color:var(--amber)}
+.tier.r .t-name{color:var(--green)}
+.tier.a .t-name{color:var(--steel)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:.74rem;padding:3px 8px;border-radius:999px;border:1px solid var(--rule);color:var(--ink-2);background:var(--paper);opacity:0;transform:translateY(4px);animation:chip .5s ease forwards}
+.tier.r .chip{border-color:color-mix(in srgb,var(--green) 40%,var(--rule))}
+.tier.a .chip{border-color:color-mix(in srgb,var(--steel) 40%,var(--rule))}
+.tier.g .chip{border-color:var(--amber);background:var(--amber-soft);color:var(--ink)}
+@keyframes chip{to{opacity:1;transform:none}}
+.gate-note{margin-top:.8rem;font-size:.86rem;color:var(--ink-3)}
+.gate-note code{font-family:var(--mono);font-size:.8rem;background:var(--card);border:1px solid var(--rule);padding:1px 5px;border-radius:4px}
+
+/* ledger */
+.ledger{width:100%;border-collapse:collapse;font-size:.95rem}
+.ledger th{text-align:left;font-family:var(--mono);font-size:.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;padding:0 10px 8px 0;border-bottom:1px solid var(--rule)}
+.ledger td{padding:9px 10px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.ledger td.n{font-family:var(--display);font-weight:600;font-size:1.35rem;white-space:nowrap;width:1%;padding-right:18px;letter-spacing:-.01em}
+.ledger td.src{font-family:var(--mono);font-size:.76rem;color:var(--ink-3);white-space:nowrap}
+@media (max-width:720px){ .ledger td.src{display:none} .ledger th.src{display:none} }
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:1.4rem}
+@media (max-width:820px){ .rules{grid-template-columns:1fr} }
+.rule-card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:18px}
+.rule-card .eyebrow{margin-bottom:.5rem}
+.rule-card b{font-family:var(--display);font-size:1.08rem;font-weight:600;display:block;margin-bottom:.35rem}
+.rule-card p{font-size:.93rem;color:var(--ink-2);margin:0}
+
+/* two-col text */
+.cols{display:grid;grid-template-columns:1.1fr .9fr;gap:2.4rem}
+@media (max-width:820px){ .cols{grid-template-columns:1fr;gap:1rem} }
+ul.tight{padding-left:1.1rem;margin:.4rem 0}
+ul.tight li{margin:.35rem 0}
+ul.tight li b{font-weight:600}
+
+/* layered architecture diagram */
+.layers{display:grid;grid-template-columns:1fr 232px;gap:10px;margin-top:1.2rem}
+@media (max-width:820px){ .layers{grid-template-columns:1fr} .rails{grid-column:auto!important;grid-row:auto!important} }
+.layer{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:12px 14px 13px;position:relative}
+.layer .l-name{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem}
+.layer .boxes{display:flex;flex-wrap:wrap;gap:6px}
+.box{font-size:.84rem;line-height:1.35;padding:6px 10px;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink)}
+.box small{display:block;font-family:var(--mono);font-size:.7rem;color:var(--ink-3);margin-top:1px}
+.box.hi{border-color:color-mix(in srgb,var(--steel) 55%,var(--rule));background:var(--steel-soft)}
+.layer.arrow::after{content:"";position:absolute;left:50%;bottom:-11px;width:1px;height:11px;background:var(--ink-3)}
+.rails{grid-column:2;grid-row:1 / span 5;border-color:var(--amber);background:var(--amber-soft);display:flex;flex-direction:column;gap:.5rem}
+.rails .l-name{color:var(--amber)}
+.rails p{font-size:.84rem;margin:0;color:var(--ink)}
+.rails .box{background:var(--card)}
+.ladder .boxes{align-items:center}
+.ladder .sep{font-family:var(--mono);color:var(--ink-3);font-size:.8rem}
+pre.tree{font-family:var(--mono);font-size:.82rem;line-height:1.55;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px;overflow-x:auto;margin:1rem 0;color:var(--ink)}
+
+/* bounds table */
+table.bounds{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:.6rem}
+table.bounds th,table.bounds td{text-align:left;padding:9px 14px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+table.bounds th{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+table.bounds td.v{font-family:var(--mono);white-space:nowrap}
+
+/* pipeline (a real sequence, hence numbered) */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:1.2rem}
+@media (max-width:560px){ .pipe{grid-template-columns:repeat(2,1fr)} }
+.step{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:12px 12px 13px;font-size:.86rem;color:var(--ink-2)}
+.step .k{font-family:var(--mono);font-size:.7rem;color:var(--ink-3)}
+.step .t{font-family:var(--display);font-weight:600;font-size:.98rem;color:var(--ink);display:block;margin:.15rem 0 .25rem}
+.found{border-left:3px solid var(--amber);padding:.2rem 0 .2rem 1rem;margin:1rem 0}
+.found li{margin:.45rem 0;font-size:.95rem}
+
+/* lessons */
+.lesson{display:grid;grid-template-columns:96px 1fr;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--rule)}
+.lesson:last-child{border-bottom:0}
+.lesson .id{font-family:var(--mono);font-size:.8rem;color:var(--amber);padding-top:.25rem}
+.lesson b{font-family:var(--display);font-weight:600;font-size:1.05rem;display:block;margin-bottom:.2rem}
+.lesson p{margin:0;font-size:.95rem;color:var(--ink-2)}
+@media (max-width:560px){ .lesson{grid-template-columns:1fr;gap:.2rem} }
+
+/* stack */
+.stack{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 28px;font-size:.93rem}
+@media (max-width:720px){ .stack{grid-template-columns:1fr} }
+.stack div b{font-family:var(--mono);font-weight:500;font-size:.76rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.15rem}
+
+footer{padding:2.4rem 0 3rem;border-top:1px solid var(--rule);font-size:.86rem;color:var(--ink-3)}
+footer a{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top">JARVIS OS</a>
+    <nav aria-label="Sections">
+      <a href="#control">Control model</a>
+      <a href="#tree">Delegation</a>
+      <a href="#career">Career Hub</a>
+      <a href="#lessons">Lessons</a>
+      <a href="#built">How it was built</a>
+      <a class="gh" href="https://github.com/Joseph-Vincent-SDB/jarvis-os">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Case study · July 2026 to present · counted from the live system on 17 Sep 2026</div>
+    <h1 style="margin-top:.8rem">An AI operating system whose most important feature is <em>what it refuses to do.</em></h1>
+    <p class="lede">Seventeen specialised agents run research, a job-search pipeline, investment research, study support and security monitoring on one Mac, unattended. Nothing is sent, deleted, paid or traded without a human tapping approve, every action is logged to a hash-chained ledger, and the whole thing runs with zero pay-per-token API spend.</p>
+    <p class="who">Specified, governed and operated by an undergraduate Commerce/Law student. Code written by AI coding agents to those specifications, reviewed change by change.</p>
+
+    <div class="gate" aria-label="The three action tiers">
+      <div class="tier r">
+        <div class="t-head"><span class="t-name">Read</span><span class="t-count">15 actions · tier R</span></div>
+        <p class="t-rule">Runs on its own when asked. Search, status, describe the screen on request.</p>
+        <div class="chips">
+          <span class="chip" style="animation-delay:.05s">calendar.query</span><span class="chip" style="animation-delay:.1s">file.find</span><span class="chip" style="animation-delay:.15s">wifi.status</span><span class="chip" style="animation-delay:.2s">battery.status</span><span class="chip" style="animation-delay:.25s">media.whatplaying</span><span class="chip" style="animation-delay:.3s">screen.ask</span><span class="chip" style="animation-delay:.35s">ocr.grab</span><span class="chip" style="animation-delay:.4s">web.search</span>
+        </div>
+      </div>
+      <div class="tier a">
+        <div class="t-head"><span class="t-name">Act</span><span class="t-count">26 actions · tier A</span></div>
+        <p class="t-rule">Reversible and local. Runs on a voice command, logged and shown on the overlay as it happens.</p>
+        <div class="chips">
+          <span class="chip" style="animation-delay:.45s">timer.set</span><span class="chip" style="animation-delay:.5s">app.open</span><span class="chip" style="animation-delay:.55s">wifi.on</span><span class="chip" style="animation-delay:.6s">volume.set</span><span class="chip" style="animation-delay:.65s">media.pause</span><span class="chip" style="animation-delay:.7s">note.create</span><span class="chip" style="animation-delay:.75s">reminder.create</span><span class="chip" style="animation-delay:.8s">calendar.create</span><span class="chip" style="animation-delay:.85s">mail.draft</span>
+        </div>
+      </div>
+      <div class="tier g">
+        <div class="t-head"><span class="t-name">Gated</span><span class="t-count">2 actions · tier G</span></div>
+        <p class="t-rule">Anything that leaves the machine. A fresh human confirmation every time; no standing authorisation exists.</p>
+        <div class="chips">
+          <span class="chip" style="animation-delay:1s">mail.send</span><span class="chip" style="animation-delay:1.1s">message.send</span>
+        </div>
+      </div>
+    </div>
+    <p class="gate-note">Every action goes through one audited gateway, <code>jarvis-do</code>: registry lookup, tier check, mechanism, ledger entry. No agent or script calls the operating system directly. Deleting files, moving money and placing trades are not registered at all.</p>
+  </div>
+</section>
+
+<section id="glance">
+  <div class="wrap">
+    <div class="eyebrow">At a glance</div>
+    <h2>Every number with where it was counted</h2>
+    <table class="ledger">
+      <thead><tr><th>Count</th><th>What it is</th><th class="src">Counted from</th></tr></thead>
+      <tbody>
+        <tr><td class="n">17</td><td>specialised agents, each scoped to the minimum tools it needs</td><td class="src">agent definition files</td></tr>
+        <tr><td class="n">37</td><td>scheduled jobs that run the system unattended (macOS launchd)</td><td class="src">LaunchAgents</td></tr>
+        <tr><td class="n">43</td><td>registered computer-control actions: 15 read, 26 reversible, 2 human-gated</td><td class="src">action registry</td></tr>
+        <tr><td class="n">19</td><td>LLM providers in the failover ladder, cloud to local, ending in deterministic templates</td><td class="src">router config</td></tr>
+        <tr><td class="n">17</td><td>deterministic hook scripts that gate, meter, audit and kill agent tool calls</td><td class="src">hooks directory</td></tr>
+        <tr><td class="n">33</td><td>architecture decision records</td><td class="src">ADR log</td></tr>
+        <tr><td class="n">30</td><td>incident post-mortems, including deliberate chaos and planted-bug drills</td><td class="src">incident log</td></tr>
+        <tr><td class="n">25 / 25</td><td>agent-behaviour evaluation fixtures passing live</td><td class="src">eval run, 19 Jul 2026</td></tr>
+        <tr><td class="n">9,566</td><td>job advertisements ingested by the Career Hub from 14 sources</td><td class="src">jobs.db</td></tr>
+        <tr><td class="n">1,695</td><td>automated tests in the Career Hub alone, across 92 files</td><td class="src">pytest --collect-only</td></tr>
+        <tr><td class="n">~700</td><td>commits across four repositories since 9 Jul 2026</td><td class="src">git log</td></tr>
+        <tr><td class="n">$0</td><td>pay-per-token API spend: one subscription, free tiers and local models</td><td class="src">ADR-016, ADR-032</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap cols">
+    <div>
+      <div class="eyebrow">Why build this</div>
+      <h2>Assistants answer questions. This one does the standing work.</h2>
+      <p>Read the news at 6am and write the brief. Find and score the day's job ads. Turn a lecture transcript into flashcards. Watch the stack's health. Research a stock and write the memo. Take a spoken instruction from across the room. All without being watched, and, the harder problem, safe to leave running.</p>
+      <p>The design premise from the original brief: <em>the point is not a smarter base model; it is to get far more out of the models you already pay for, through decomposition, delegation, memory, verification, parallelism and cost-aware routing, inside an interface you control.</em></p>
+    </div>
+    <div>
+      <div class="eyebrow">Three rules that hold it together</div>
+      <div class="rules" style="grid-template-columns:1fr;margin-top:.9rem">
+        <div class="rule-card"><b>State lives in the vault or the database, never in an agent's memory.</b><p>If it is not written down, it did not happen as far as the next agent is concerned.</p></div>
+        <div class="rule-card"><b>Rails only get tighter.</b><p>Hooks run deterministically before every tool call. They can deny or meter; they can never grant. Nothing runs with permission-bypass flags.</p></div>
+        <div class="rule-card"><div class="eyebrow">from incident 2026-07-18</div><b>Completion claims are data, not facts.</b><p>After two fabricated "done" events, only artefacts count: ledger rows, audit lines, transcripts on disk.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="wrap">
+    <div class="eyebrow">Architecture</div>
+    <h2>One machine, four surfaces, one set of rails</h2>
+    <div class="layers" aria-label="Architecture, top to bottom">
+      <div class="layer arrow">
+        <div class="l-name">Person</div>
+        <div class="boxes"><span class="box">voice<small>wake word, hold-to-talk</small></span><span class="box">browser<small>HUD, Career Hub</small></span><span class="box">phone<small>remote approvals</small></span></div>
+      </div>
+      <div class="layer rails">
+        <div class="l-name">Rails, only ever tightened</div>
+        <p>Every agent tool call passes through 17 deterministic hooks before it runs.</p>
+        <span class="box">kill switch</span><span class="box">budget gate<small>spawns debited before they run</small></span><span class="box">tool-call gate<small>500 per session</small></span><span class="box">secrets and workspace guards</span><span class="box">protected-files guard</span><span class="box">relay check</span>
+        <p style="margin-top:.4rem"><b>Human gates</b>: send, delete, pay, trade. A fresh confirmation each time.</p>
+      </div>
+      <div class="layer arrow">
+        <div class="l-name">Local surfaces, 127.0.0.1 only</div>
+        <div class="boxes"><span class="box">HUD<small>12 panels; token, origin and rate-limit middleware</small></span><span class="box">speech-aware overlay<small>idle, alert, linger, conversation</small></span><span class="box">Career Hub<small>rank, draft, review; no send path</small></span></div>
+      </div>
+      <div class="layer arrow">
+        <div class="l-name">Agents, run by 37 scheduled jobs and by voice</div>
+        <div class="boxes"><span class="box hi">JARVIS 7 delegation tree<small>Chairman, 3 division leads, workers, + Arbiter (independent reviewer)</small></span><span class="box">10 domain agents<small>research, career, finance research, study, projects, filing, news, tech support, health checks</small></span><span class="box">Warden<small>security, tests, recovery: 15 min, daily, weekly, monthly</small></span><span class="box">Nova<small>nightly upgrade proposals, risk classes A / B / C</small></span></div>
+      </div>
+      <div class="layer arrow">
+        <div class="l-name">Action gateway</div>
+        <div class="boxes"><span class="box hi">jarvis-do<small>registry lookup, tier gate, mechanism, hash-chained log entry. No caller touches the OS directly.</small></span></div>
+      </div>
+      <div class="layer">
+        <div class="l-name">Data, models, backups</div>
+        <div class="boxes"><span class="box">Obsidian vault under git<small>notes, ADRs, incidents, lessons</small></span><span class="box">Postgres<small>hash-chained activity log, preference events</small></span><span class="box">Career Hub SQLite</span><span class="box">n8n in Docker</span><span class="box">local speech<small>whisper.cpp, Kokoro, openWakeWord</small></span></div>
+        <div class="boxes ladder" style="margin-top:8px"><span class="l-name" style="margin:0;width:100%">LLM failover ladder, per call</span><span class="box">subscription model</span><span class="sep">→</span><span class="box">free-tier cloud, tiers 1 to 5<small>non-sensitive data only</small></span><span class="sep">→</span><span class="box">local model</span><span class="sep">→</span><span class="box">deterministic templates<small>never silent</small></span></div>
+        <div class="boxes" style="margin-top:8px"><span class="box">backups<small>hourly push, nightly snapshot, restic, encrypted Postgres dumps, restore drills</small></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="control">
+  <div class="wrap cols">
+    <div>
+      <div class="eyebrow">The control model</div>
+      <h2>Seventeen hooks that only tighten</h2>
+      <p>Deterministic scripts run around every agent tool call. They are the enforcement layer; prompts are not.</p>
+      <ul class="tight">
+        <li><b>Kill switch.</b> Stops every agent on a single flag.</li>
+        <li><b>Budget gate.</b> Debits every agent spawn into a ledger <em>before</em> it runs and denies at the cap: 15 per session, 4 concurrent, depth 3, 5 children per task. Nested spawns share the session budget (proven live).</li>
+        <li><b>Tool-call gate.</b> 500 calls per session; past the cap every call becomes an "ask": a conscious click-through when interactive, a cold stop for a headless runaway.</li>
+        <li><b>Secrets and workspace guards.</b> Deny reads of key files and <span class="mono">.git</span>, and writes outside the workspace.</li>
+        <li><b>Protected-files guard.</b> No agent can edit the operating rules it runs under.</li>
+        <li><b>Relay check.</b> Flags any division lead who cites a health check the ledger shows never ran.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="eyebrow">ADR-016 · ADR-018 · ADR-026 · ADR-032</div>
+      <h3 style="margin-top:.4rem">Zero spend, by invariant</h3>
+      <p style="font-size:.95rem">One subscription, free-tier providers and a local model. The router walks up to 19 providers per call and, when every model is down, renders a deterministic template rather than going silent. A later proposal to add a paid rung was withdrawn and the invariant restored.</p>
+      <p style="font-size:.95rem">Sensitive data goes only to the subscription model or the local model. The one exception is an opt-in, per-call redacted path to two providers that contractually retain nothing, adopted after the research showed redaction is a leak-reducer rather than a blocker, with the residual risk written into the decision record.</p>
+      <h3>An audit trail you can argue with</h3>
+      <ul class="tight" style="font-size:.95rem">
+        <li>Hash-chained activity log in Postgres: every action, in order, tamper-evident.</li>
+        <li>33 decision records, from typography to "no paid rung".</li>
+        <li>30 incident post-mortems, including a planted-bug drill, a credentials-wipe outage, fabricated completion events and a chaos test that killed the workflow engine on purpose.</li>
+        <li>A lessons log fed mechanically by a hook from every agent's result contract, reviewed weekly, promoted or deleted.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="tree">
+  <div class="wrap">
+    <div class="eyebrow">JARVIS 7</div>
+    <h2>A delegation tree with mechanical bounds</h2>
+    <div class="cols">
+      <div>
+        <p>One protocol at every level. A parent receives a task with a budget and a deadline, decides whether to do it or decompose it, and each child returns a structured result contract: output, cost, status, notes, lessons learned. The parent verifies the result with a separate reviewer, aggregates, and returns up.</p>
+<pre class="tree">Person
+  └── Chairman        main thread only, never a subagent
+        ├── Minerva    research &amp; analysis lead   → Scout, Ledger, Herald
+        ├── Daedalus   product &amp; building lead    → Forge, Muse
+        ├── Aegis      security, ops &amp; QC lead    → Warden, Fix, Sentinel, Archivist
+        └── Arbiter    standing reviewer; review only, never fixes</pre>
+      </div>
+      <div>
+        <p style="font-size:.95rem">Corporate titles are persona labels, not tree levels. Division leads may spawn only their own workers plus the Arbiter; cross-division, lead-to-lead and self-recursion all deny. The observer (Sentinel) stays independent of the fixers so a lead cannot launder a fix through its mouth (ADR-027).</p>
+        <h3>Evaluation</h3>
+        <p style="font-size:.95rem">Twenty-five behaviour fixtures probe the tree live: does a lead decompose or do the work itself; does it relay a health check verbatim; does it refuse to launder a fix. The full set passed 25 of 25 after two rulings: transient failures retry, and a required-field miss is a <span class="mono">NEEDS_REVIEW</span> verdict, not a pass.</p>
+      </div>
+    </div>
+    <h3>Bounds, and how each one is actually enforced</h3>
+    <table class="bounds">
+      <thead><tr><th>Bound</th><th>Value</th><th>Enforcement</th></tr></thead>
+      <tbody>
+        <tr><td>max depth</td><td class="v">3</td><td>workers are not given the spawn tool; the budget gate also denies any spawn whose caller is a worker</td></tr>
+        <tr><td>concurrent agents</td><td class="v">4</td><td>a stop hook marks ledger rows complete; the gate counts open rows per session and denies at the cap; rows older than 60 minutes age out so a dead parent cannot brick spawning</td></tr>
+        <tr><td>children per task</td><td class="v">5</td><td>per-caller ledger count, in session</td></tr>
+        <tr><td>agents per goal</td><td class="v">15 / session</td><td>every spawn debited into the ledger before it runs; tree-wide, so nested spawns share the budget</td></tr>
+        <tr><td>tool calls</td><td class="v">500 / session</td><td>past the cap every call answers "ask": a click-through when interactive, a cold stop for a headless runaway</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="voice">
+  <div class="wrap cols">
+    <div>
+      <div class="eyebrow">Voice and the macOS action layer</div>
+      <h2>Nothing spoken leaves the machine</h2>
+      <ul class="tight">
+        <li><b>Always-on wake word</b> (openWakeWord on ONNX), <b>local speech-to-text</b> (whisper.cpp) and <b>local text-to-speech</b> (Kokoro).</li>
+        <li><b>A speech-aware overlay</b> with a four-state machine and a <b>media guard</b> that pauses or ducks whatever is playing, re-entrantly, with a 120-second watchdog so a crash can never leave the room muted.</li>
+        <li><b>Screen questions.</b> "What's on my screen" captures, OCRs and describes the display, on request and only on request.</li>
+        <li><b>A local HUD</b> with twelve panels behind token, origin and rate-limit middleware; an ambient read-only view doubles as the wallpaper.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="eyebrow">ADR-023</div>
+      <h3 style="margin-top:.4rem">Benchmarked, not deployed</h3>
+      <p style="font-size:.95rem">A newer speech model was benchmarked against the incumbent and deliberately not deployed. The decision record shows the numbers, which is the point: a decision you can re-open later is worth more than a faster model you cannot explain.</p>
+      <div class="eyebrow" style="margin-top:1.4rem">Remote approvals</div>
+      <p style="font-size:.95rem">Gated actions can be approved from a phone. The live proof produced a lesson worth more than the feature: three consecutive approvals were tapped, including two whose text said "tap deny". Remote approval is a liveness gate, not a review gate, so approval summaries now lead with the consequence, not the mechanism.</p>
+    </div>
+  </div>
+</section>
+
+<section id="career">
+  <div class="wrap">
+    <div class="eyebrow">Career Hub</div>
+    <h2>A job-search pipeline with a strict honesty model</h2>
+    <p class="lede">The largest subsystem, and the one closest to analyst and consulting work: a product-owned data pipeline that reads the Sydney market every day and drafts, but never sends.</p>
+
+    <div class="pipe" aria-label="Pipeline stages, in order">
+      <div class="step"><span class="k">1</span><span class="t">Fetch</span>14 sources: aggregators, seven ATS vendors, a scraper, RSS alerts, newsletters, VC boards</div>
+      <div class="step"><span class="k">2</span><span class="t">Normalise</span>one schema; duplicates merged across sources by fingerprint</div>
+      <div class="step"><span class="k">3</span><span class="t">Firm intelligence</span>company-registry lookup, employer aliases, agency detection</div>
+      <div class="step"><span class="k">4</span><span class="t">Classify</span>hours, unpaid, contract; a seniority guard for roles a student cannot get</div>
+      <div class="step"><span class="k">5</span><span class="t">Score</span>fit against the profile; stale-cache detection by content hash</div>
+      <div class="step"><span class="k">6</span><span class="t">Link check</span>404 or 410 twice = closed; 429 = rate-limited, not dead</div>
+      <div class="step"><span class="k">7</span><span class="t">Shortlist</span>three a day into the daily note</div>
+      <div class="step"><span class="k">8</span><span class="t">Pack</span>CV, cover letter, cold email: drafted, never sent; read-only inbox sweep for replies</div>
+    </div>
+
+    <div class="cols" style="margin-top:2rem">
+      <div>
+        <h3 style="margin-top:0">The honesty model</h3>
+        <ul class="tight" style="font-size:.95rem">
+          <li>The profile file is the <b>only source the drafting pipeline may draw facts from</b>, and every drafting prompt carries a no-fabrication contract. A missing fact stays missing.</li>
+          <li><b>Four independent submit guards</b>: a halt flag, an empty vendor allowlist, an evidence gate that measures form-fill quality per vendor, and payload-hash pinning. The system has never submitted an application and cannot.</li>
+          <li>Content rules live in code and tests, not only in prompts: dash normalisation on every draft, and a seniority guard measured on the pool (40 of 52 senior-titled roles had slipped past the old pattern and sat above the internships).</li>
+          <li><b>Four closing signals</b> so dead roles stop scoring, including a link checker that treats a rate-limit response as "try again", after one vendor was made to look 95% dead by a 429.</li>
+        </ul>
+        <p class="mono" style="color:var(--ink-3);margin-top:1rem">9,566 ads · 7,182 scored · 166 firms · 21 pipeline modules · 11 fetchers · 26 agent modules · 38k lines of Python · 1,695 tests · an MCP server for agents</p>
+      </div>
+      <div>
+        <h3 style="margin-top:0">What two reviews found</h3>
+        <p style="font-size:.95rem">Scored 76 then 79 out of 100. Six defects were invisible in the source and only visible in the data:</p>
+        <ul class="found">
+          <li>an absent employer field had merged four different employers' ads into one identity;</li>
+          <li>a field documented as shipped existed nowhere;</li>
+          <li>the top-scoring role was an unpaid internship;</li>
+          <li>one source regenerated its URLs per fetch, so a URL was never an identity there;</li>
+          <li>a vendor's "48% clean" fill rate had been measured the day <em>before</em> its own fix landed (fresh benchmark: 15 of 15);</li>
+          <li>cached scores went stale after profile edits with no signal; fixed by hashing profile content into every score row.</li>
+        </ul>
+        <p style="font-size:.95rem"><b>The rule that came out of it:</b> a code fix to anything cached or exported is only half a fix; backfill the stored copies. And review the data, not just the code.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="lessons">
+  <div class="wrap">
+    <div class="eyebrow">Lessons that cost something</div>
+    <h2>Promoted from the log, each with the evidence that earned it</h2>
+    <div class="lesson"><span class="id">L-003</span><div><b>Completion claims are data, not facts.</b><p>Two fabricated "stop" events claimed pending gates had passed and urged the next phase, with nothing in the ledger, the audit log or the transcripts. Trust artefacts only.</p></div></div>
+    <div class="lesson"><span class="id">L-004</span><div><b>Remote approvals get rubber-stamped.</b><p>The human pattern is green-button-by-default. Approval requests now lead with the consequence; anything that needs real review does not go through a phone.</p></div></div>
+    <div class="lesson"><span class="id">L-005</span><div><b>A pre-written result contract is a red flag, whatever the framing.</b><p>An agent that returns a "done" contract it could not have earned yet is reporting intent as fact.</p></div></div>
+    <div class="lesson"><span class="id">L-002</span><div><b>When every path fails identically, suspect one shared dependency.</b><p>"Subagents cannot reach the keychain" turned out to be an outage wearing a rail-shaped costume. The rule was amended, with the evidence, rather than left standing.</p></div></div>
+    <div class="lesson"><span class="id">hub</span><div><b>Always stratify before calling a score gap "bias".</b><p>The naive reading of the hub's score distributions was wrong five times running.</p></div></div>
+    <div class="lesson"><span class="id">hub</span><div><b>Check for another running session before assuming a stray process.</b><p>A commit collision from a second concurrent session looked exactly like a bug.</p></div></div>
+  </div>
+</section>
+
+<section id="built">
+  <div class="wrap cols">
+    <div>
+      <div class="eyebrow">How it was built</div>
+      <h2>Specification first, rulings not vibes</h2>
+      <p><b>Every stage began as a written brief</b>: the goal, the constraints, the out-of-scope boundaries, the verification required before the next phase. The JARVIS 7 brief runs to 23 sections and opens with "re-verify the fast-moving platform facts and record what you found versus what this document assumed" before any code.</p>
+      <p><b>AI coding agents wrote the code.</b> Claude Code agents implemented each feature against the brief. I reviewed every change, ran the tests and the eval fixtures, and recorded the decision. A claim that could not be verified from an artefact was not accepted. This is stated plainly because it is the actual division of labour, and because directing, verifying and governing agent-written systems is the skill the project demonstrates.</p>
+      <p><b>When the brief and reality disagreed, a ruling settled it and was logged</b>: no API keys, no permission-bypass flags, no paid rung, sensitive data stays local. Later proposals that conflicted with a ruling were rejected and the rejection recorded.</p>
+      <p><b>Self-improvement is propose-then-approve.</b> An autonomous "engineering lead" run produced ten improvements on an unmerged branch pair, every behaviour change behind a default-off flag, with a restore checklist and a per-flag enable order for the human to work through.</p>
+    </div>
+    <div>
+      <div class="eyebrow">Stack</div>
+      <div class="stack" style="margin-top:.9rem">
+        <div><b>Agents and models</b>Claude Code with per-agent tool scoping; a hand-rolled multi-provider router over 19 providers (ADR-019); a local Ollama tier; deterministic template fallbacks</div>
+        <div><b>Voice</b>openWakeWord, whisper.cpp, Kokoro; Hammerspoon for the overlay and hotkeys</div>
+        <div><b>Data</b>Postgres (hash-chained activity log, preference events); SQLite (Career Hub); an Obsidian vault under git with semantic and exact-match recall</div>
+        <div><b>Orchestration</b>macOS launchd, 37 jobs; n8n in Docker; a Python MCP server</div>
+        <div><b>Apps</b>a Next.js HUD; a single-file Career Hub front end with a jsPDF document generator; a Python career pipeline, 38k lines, 1,695 tests</div>
+        <div><b>Safety and ops</b>deterministic hooks; restic and encrypted Postgres backups; OSV dependency scans; secrets scanning; chaos and restore drills; Warden every 15 minutes, daily, weekly, monthly</div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>This is a case study, not the source. The four source repositories are private because they hold personal data (calendar, email triage, finances, study notes, job applications). Sanitised excerpts, an ADR, an incident post-mortem, an eval fixture, can be shared on request. <a href="https://github.com/Joseph-Vincent-SDB/jarvis-os">Repository and README ↗</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
