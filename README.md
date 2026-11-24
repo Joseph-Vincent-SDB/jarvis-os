@@ -123,8 +123,8 @@ No agent or script calls `osascript` or Shortcuts directly. Everything goes thro
 Seventeen hook scripts run deterministically around agent tool calls:
 
 - a **kill switch** that stops every agent on a single flag;
-- a **budget gate** that debits every agent spawn into a ledger *before* it runs and denies at the cap (15 per session, 4 concurrent, depth 3, 5 children per task);
-- a **tool-call gate** (500 calls per session) that turns every call into an "ask" past the cap: a conscious click-through when interactive, a cold stop for a headless runaway;
+- a **budget gate** that debits every agent spawn into a ledger *before* it runs and denies at the cap (60 per session, 8 concurrent, depth 3, 5 children per task);
+- a **tool-call gate** (8,000 calls per session) that turns every call into an "ask" past the cap: a conscious click-through when interactive, a cold stop for a headless runaway;
 - **secrets and workspace guards** that deny reads of `.env`, key files and `.git`, and writes outside the workspace;
 - a **protected-files guard** so no agent can edit the operating rules it runs under;
 - a **relay check** that flags any division lead who cites a health check the ledger shows never ran.

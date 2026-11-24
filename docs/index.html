@@ -257,7 +257,7 @@ footer a{color:var(--ink-2)}
       <div class="layer rails">
         <div class="l-name">Rails, only ever tightened</div>
         <p>Every agent tool call passes through 17 deterministic hooks before it runs.</p>
-        <span class="box">kill switch</span><span class="box">budget gate<small>spawns debited before they run</small></span><span class="box">tool-call gate<small>500 per session</small></span><span class="box">secrets and workspace guards</span><span class="box">protected-files guard</span><span class="box">relay check</span>
+        <span class="box">kill switch</span><span class="box">budget gate<small>spawns debited before they run</small></span><span class="box">tool-call gate<small>8,000 per session</small></span><span class="box">secrets and workspace guards</span><span class="box">protected-files guard</span><span class="box">relay check</span>
         <p style="margin-top:.4rem"><b>Human gates</b>: send, delete, pay, trade. A fresh confirmation each time.</p>
       </div>
       <div class="layer arrow">
@@ -290,8 +290,8 @@ footer a{color:var(--ink-2)}
       <p>Deterministic scripts run around every agent tool call. They are the enforcement layer; prompts are not.</p>
       <ul class="tight">
         <li><b>Kill switch.</b> Stops every agent on a single flag.</li>
-        <li><b>Budget gate.</b> Debits every agent spawn into a ledger <em>before</em> it runs and denies at the cap: 15 per session, 4 concurrent, depth 3, 5 children per task. Nested spawns share the session budget (proven live).</li>
-        <li><b>Tool-call gate.</b> 500 calls per session; past the cap every call becomes an "ask": a conscious click-through when interactive, a cold stop for a headless runaway.</li>
+        <li><b>Budget gate.</b> Debits every agent spawn into a ledger <em>before</em> it runs and denies at the cap: 60 per session, 8 concurrent, depth 3, 5 children per task. Nested spawns share the session budget (proven live).</li>
+        <li><b>Tool-call gate.</b> 8,000 calls per session; past the cap every call becomes an "ask": a conscious click-through when interactive, a cold stop for a headless runaway.</li>
         <li><b>Secrets and workspace guards.</b> Deny reads of key files and <span class="mono">.git</span>, and writes outside the workspace.</li>
         <li><b>Protected-files guard.</b> No agent can edit the operating rules it runs under.</li>
         <li><b>Relay check.</b> Flags any division lead who cites a health check the ledger shows never ran.</li>
@@ -338,10 +338,10 @@ footer a{color:var(--ink-2)}
       <thead><tr><th>Bound</th><th>Value</th><th>Enforcement</th></tr></thead>
       <tbody>
         <tr><td>max depth</td><td class="v">3</td><td>workers are not given the spawn tool; the budget gate also denies any spawn whose caller is a worker</td></tr>
-        <tr><td>concurrent agents</td><td class="v">4</td><td>a stop hook marks ledger rows complete; the gate counts open rows per session and denies at the cap; rows older than 60 minutes age out so a dead parent cannot brick spawning</td></tr>
+        <tr><td>concurrent agents</td><td class="v">8</td><td>a stop hook marks ledger rows complete; the gate counts open rows per session and denies at the cap; rows older than 60 minutes age out so a dead parent cannot brick spawning</td></tr>
         <tr><td>children per task</td><td class="v">5</td><td>per-caller ledger count, in session</td></tr>
-        <tr><td>agents per goal</td><td class="v">15 / session</td><td>every spawn debited into the ledger before it runs; tree-wide, so nested spawns share the budget</td></tr>
-        <tr><td>tool calls</td><td class="v">500 / session</td><td>past the cap every call answers "ask": a click-through when interactive, a cold stop for a headless runaway</td></tr>
+        <tr><td>agents per goal</td><td class="v">60 / session</td><td>every spawn debited into the ledger before it runs; tree-wide, so nested spawns share the budget</td></tr>
+        <tr><td>tool calls</td><td class="v">8,000 / session</td><td>past the cap every call answers "ask": a click-through when interactive, a cold stop for a headless runaway</td></tr>
       </tbody>
     </table>
   </div>
