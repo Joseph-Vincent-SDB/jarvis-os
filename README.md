@@ -2,11 +2,11 @@
 
 **A self-hosted, multi-agent AI operating system for one person's life, and the job-search pipeline that grew inside it.**
 
-Seventeen specialised AI agents run research, a career pipeline, investment research, study support and security monitoring on a single Mac, under a control model that never sends, deletes, pays or trades without a human tapping approve. Built in ten weeks by an undergraduate Commerce/Law student who wrote the specifications, the rules and the decision records, and directed AI coding agents to write the code.
+Seventeen specialised AI agents run research, a career pipeline, investment research, study support and security monitoring on a single Mac, under a control model that never sends, deletes, pays or trades without a human tapping approve. Built from July 2026 by an undergraduate Commerce/Law student who wrote the specifications, the rules and the decision records, and directed AI coding agents to write the code.
 
 **[Read the case study site →](https://joseph-vincent-sdb.github.io/jarvis-os/)** · [Control model](#the-control-model) · [Delegation tree](#jarvis-7-the-delegation-tree) · [Career Hub](#career-hub-the-job-search-pipeline) · [Lessons that cost something](#lessons-that-cost-something) · [How it was built](#how-it-was-built)
 
-> The source repositories are private because they hold personal data (calendar, email triage, finances, study notes, job applications). This repository is the sanitised case study. Every number below was counted from the live system on 2026-09-17 and is quoted with where it comes from.
+> The source repositories are private because they hold personal data (calendar, email triage, finances, study notes, job applications). This repository is the sanitised case study. Every number below was counted from the live system on 2026-11-24 (first published 2026-09-17) and is quoted with where it comes from; dated measurements keep their dates.
 
 ---
 
@@ -15,16 +15,16 @@ Seventeen specialised AI agents run research, a career pipeline, investment rese
 | Number | What it is | Counted from |
 |---:|---|---|
 | **17** | specialised agents, each scoped to the minimum tools it needs | agent definition files |
-| **37** | scheduled jobs (macOS launchd) that run the system unattended | LaunchAgents |
+| **42** | scheduled jobs (macOS launchd) that run the system unattended | LaunchAgents |
 | **43** | registered computer-control actions: 15 read-only, 26 reversible, 2 human-gated | action registry |
-| **19** | LLM providers in the failover ladder, cloud to local, ending in deterministic templates | router config |
+| **18** | LLM providers in the failover ladder, cloud to local, ending in deterministic templates | router config |
 | **17** | deterministic hook scripts that gate, meter, audit and kill agent tool calls | hooks directory |
 | **33** | architecture decision records | ADR log |
-| **30** | incident post-mortems, including deliberate chaos and planted-bug drills | incident log |
+| **32** | incident post-mortems, including deliberate chaos and planted-bug drills | incident log |
 | **25 / 25** | agent-behaviour evaluation fixtures passing live | eval run, 2026-07-19 |
-| **9,566** | job advertisements ingested by the Career Hub from 14 sources | `jobs.db` |
-| **1,695** | automated tests in the Career Hub alone (92 files) | `pytest --collect-only` |
-| **~700** | commits across four repositories since 2026-07-09 | `git log` |
+| **48,627** | job advertisements ingested by the Career Hub from 35 sources | `jobs.db` |
+| **9,718** | automated tests in the Career Hub alone (223 files), plus 184 browser tests | `pytest` and Playwright runs, 2026-11-24 |
+| **~1,500** | commits across four repositories since 2026-07-09 (about 900 excluding automatic snapshots) | `git log` |
 | **$0** | pay-per-token API spend: one subscription, free tiers and local models | ADR-016, ADR-032 |
 
 ---
@@ -48,7 +48,7 @@ flowchart TB
   end
 
   subgraph Surfaces["local surfaces (127.0.0.1 only)"]
-    HUD["HUD, 12 panels<br/>token + origin + rate-limit middleware"]
+    HUD["HUD, 16 panels<br/>token + origin + rate-limit middleware"]
     OVERLAY["speech-aware overlay<br/>IDLE, ALERT, LINGER, CONVERSATION"]
     CH["Career Hub<br/>rank, draft, review; no send path"]
   end
@@ -87,7 +87,7 @@ flowchart TB
   Agents --> ROUTER
   Agents -.every tool call.-> HOOKS
   ROUTER -.tier G.-> GATES
-  launchd["37 launchd jobs"] --> Agents
+  launchd["42 launchd jobs"] --> Agents
   launchd --> Ladder
   HUD --> PG
   CH --> SQLITE
@@ -131,13 +131,13 @@ Seventeen hook scripts run deterministically around agent tool calls:
 
 ### Zero spend, by invariant
 
-The system runs on one subscription, free-tier cloud providers and a local model. ADR-016 made zero pay-per-token spend an invariant; a later proposal to add a paid rung was withdrawn (ADR-032) and the invariant restored. The router walks up to 19 providers per call and, when every model is down, renders a deterministic template instead of going silent. Data classified as sensitive goes only to the subscription model or the local model (ADR-018). The one exception is an opt-in, per-call redacted path to two providers that contractually retain nothing, adopted after research showed redaction is a leak-reducer rather than a blocker, with the residual risk written into the decision record (ADR-026).
+The system runs on one subscription, free-tier cloud providers and a local model. ADR-016 made zero pay-per-token spend an invariant; a later proposal to add a paid rung was withdrawn (ADR-032) and the invariant restored. The router walks up to 18 providers per call and, when every model is down, renders a deterministic template instead of going silent. Data classified as sensitive goes only to the subscription model or the local model (ADR-018). The one exception is an opt-in, per-call redacted path to three providers that contractually retain nothing, adopted after research showed redaction is a leak-reducer rather than a blocker, with the residual risk written into the decision record (ADR-026).
 
 ### An audit trail you can argue with
 
 - **Hash-chained activity log** in Postgres: every agent action, in order, tamper-evident.
 - **33 architecture decision records**, from typography to "no paid rung".
-- **30 incident post-mortems**, including a planted-bug drill, a credentials-wipe outage, fabricated completion events, and a chaos test that killed the workflow engine on purpose.
+- **32 incident post-mortems**, including a planted-bug drill, a credentials-wipe outage, fabricated completion events, and a chaos test that killed the workflow engine on purpose.
 - **A standing lessons log**: each agent's result contract carries a `lessons_learned` field, captured mechanically by a hook, reviewed weekly, promoted or deleted.
 
 ---
@@ -192,7 +192,7 @@ Corporate titles are persona labels, not tree levels; effective depth is three a
 - **Always-on wake word** (openWakeWord, ONNX runtime), **local speech-to-text** (whisper.cpp) and **local text-to-speech** (Kokoro). Nothing spoken leaves the machine.
 - **A speech-aware overlay** with a four-state machine (idle, alert, linger, conversation) and a **media guard** that pauses or ducks whatever is playing, re-entrantly, with a 120-second watchdog so a crash can never leave the room muted.
 - **Screen questions**: "what's on my screen" captures, OCRs and describes the display on request, and only on request.
-- **A local HUD** with twelve panels, bound to localhost with token, origin and rate-limit middleware; an ambient read-only view doubles as the desktop wallpaper.
+- **A local HUD** with sixteen panels, bound to localhost with token, origin and rate-limit middleware; an ambient read-only view doubles as the desktop wallpaper.
 - Voice, overlay, agents and headless jobs all call the same audited action gateway.
 
 A newer speech model was benchmarked and deliberately not deployed (ADR-023); the decision record shows the numbers.
@@ -207,7 +207,7 @@ The largest subsystem, and the one most relevant to analyst and consulting work:
 
 ```mermaid
 flowchart LR
-  F["fetch<br/>14 sources: aggregators, seven ATS vendors,<br/>a scraper, RSS alerts, newsletters, VC boards"] --> N["normalise<br/>+ dedupe"]
+  F["fetch<br/>35 sources: job boards, aggregators, ATS vendors' public boards,<br/>a scraper, employer career pages, RSS alerts, newsletters, a VC board"] --> N["normalise<br/>+ dedupe"]
   N --> FI["firm intelligence<br/>company registry lookup,<br/>employer aliases, agency detection"]
   FI --> EC["employment<br/>classification<br/>hours, unpaid, contract"]
   EC --> S["score<br/>fit against profile;<br/>stale-cache detection"]
@@ -217,9 +217,9 @@ flowchart LR
   P --> R["read-only inbox sweep<br/>reply detection"]
 ```
 
-- **9,566 ads** ingested from 14 sources, **7,182 scored**, **166 firms** tracked with registry-verified identities.
-- **Four closing signals** so dead roles stop scoring: explicit close dates, stale-unconfirmed ageing, expiry, and a link checker that closes a role only after two dead responses and treats a `429` as "rate-limited", not "removed" (a bug that once made a whole vendor look 95% dead).
-- **21 pipeline modules, 11 fetchers, 26 agent modules**; 38k lines of Python; **1,695 tests**.
+- **48,627 ads** ingested from 35 sources, **18,751 scored**, **284 employers** tracked, 175 of them matched to a company-registry (ABN) identity.
+- **Closing signals** so dead roles stop scoring, including explicit close dates, stale-unconfirmed ageing, expiry, and a link checker that closes a role only after two dead responses and treats a `429` as "rate-limited", not "removed" (a bug that once made a whole vendor look 95% dead).
+- **44 pipeline modules, 35 fetchers, 28 agent modules**; 49k lines of Python plus 49k lines of tests; **9,718 automated tests** and 184 browser tests.
 - An **MCP server** exposes the hub to agents; a browser bridge handles form autofill under an **evidence gate** that measures fill quality per vendor before any vendor is allowed near a submit button.
 
 ### The honesty model
@@ -272,11 +272,11 @@ Promoted from the lessons log, each with the evidence that earned it.
 
 ## Stack
 
-**Agents and models:** Claude Code with per-agent tool scoping; a hand-rolled multi-provider router (ADR-019) over 19 providers; a local Ollama tier; deterministic template fallbacks.
+**Agents and models:** Claude Code with per-agent tool scoping; a hand-rolled multi-provider router (ADR-019) over 18 providers; a local Ollama tier; deterministic template fallbacks.
 **Voice:** openWakeWord, whisper.cpp, Kokoro; Hammerspoon for the overlay and hotkeys.
 **Data:** Postgres (hash-chained activity log, preference events), SQLite (Career Hub), an Obsidian vault under git with a semantic and exact-match recall index.
-**Orchestration:** macOS launchd (37 jobs), n8n in Docker, a Python MCP server.
-**Apps:** a Next.js HUD; a single-file Career Hub front end with a jsPDF document generator; a Python career pipeline (38k lines, 1,695 tests).
+**Orchestration:** macOS launchd (42 jobs), n8n in Docker, a Python MCP server.
+**Apps:** a Next.js HUD; a single-file Career Hub front end with a jsPDF document generator; a Python career pipeline (49k lines, 9,718 tests).
 **Safety and ops:** deterministic hooks, restic and encrypted Postgres backups, OSV dependency scans, secrets scanning, chaos and restore drills.
 
 ---

@@ -170,7 +170,7 @@ footer a{color:var(--ink-2)}
 <main id="top">
 <section class="hero">
   <div class="wrap">
-    <div class="eyebrow">Case study · July 2026 to present · counted from the live system on 17 Sep 2026</div>
+    <div class="eyebrow">Case study · July 2026 to present · counted from the live system on 24 Nov 2026</div>
     <h1 style="margin-top:.8rem">An AI operating system whose most important feature is <em>what it refuses to do.</em></h1>
     <p class="lede">Seventeen specialised agents run research, a job-search pipeline, investment research, study support and security monitoring on one Mac, unattended. Nothing is sent, deleted, paid or traded without a human tapping approve, every action is logged to a hash-chained ledger, and the whole thing runs with zero pay-per-token API spend.</p>
     <p class="who">Specified, governed and operated by an undergraduate Commerce/Law student. Code written by AI coding agents to those specifications, reviewed change by change.</p>
@@ -210,16 +210,16 @@ footer a{color:var(--ink-2)}
       <thead><tr><th>Count</th><th>What it is</th><th class="src">Counted from</th></tr></thead>
       <tbody>
         <tr><td class="n">17</td><td>specialised agents, each scoped to the minimum tools it needs</td><td class="src">agent definition files</td></tr>
-        <tr><td class="n">37</td><td>scheduled jobs that run the system unattended (macOS launchd)</td><td class="src">LaunchAgents</td></tr>
+        <tr><td class="n">42</td><td>scheduled jobs that run the system unattended (macOS launchd)</td><td class="src">LaunchAgents</td></tr>
         <tr><td class="n">43</td><td>registered computer-control actions: 15 read, 26 reversible, 2 human-gated</td><td class="src">action registry</td></tr>
-        <tr><td class="n">19</td><td>LLM providers in the failover ladder, cloud to local, ending in deterministic templates</td><td class="src">router config</td></tr>
+        <tr><td class="n">18</td><td>LLM providers in the failover ladder, cloud to local, ending in deterministic templates</td><td class="src">router config</td></tr>
         <tr><td class="n">17</td><td>deterministic hook scripts that gate, meter, audit and kill agent tool calls</td><td class="src">hooks directory</td></tr>
         <tr><td class="n">33</td><td>architecture decision records</td><td class="src">ADR log</td></tr>
-        <tr><td class="n">30</td><td>incident post-mortems, including deliberate chaos and planted-bug drills</td><td class="src">incident log</td></tr>
+        <tr><td class="n">32</td><td>incident post-mortems, including deliberate chaos and planted-bug drills</td><td class="src">incident log</td></tr>
         <tr><td class="n">25 / 25</td><td>agent-behaviour evaluation fixtures passing live</td><td class="src">eval run, 19 Jul 2026</td></tr>
-        <tr><td class="n">9,566</td><td>job advertisements ingested by the Career Hub from 14 sources</td><td class="src">jobs.db</td></tr>
-        <tr><td class="n">1,695</td><td>automated tests in the Career Hub alone, across 92 files</td><td class="src">pytest --collect-only</td></tr>
-        <tr><td class="n">~700</td><td>commits across four repositories since 9 Jul 2026</td><td class="src">git log</td></tr>
+        <tr><td class="n">48,627</td><td>job advertisements ingested by the Career Hub from 35 sources</td><td class="src">jobs.db</td></tr>
+        <tr><td class="n">9,718</td><td>automated tests in the Career Hub alone, across 223 files, plus 184 browser tests</td><td class="src">pytest and Playwright, 24 Nov 2026</td></tr>
+        <tr><td class="n">~1,500</td><td>commits across four repositories since 9 Jul 2026, about 900 excluding automatic snapshots</td><td class="src">git log</td></tr>
         <tr><td class="n">$0</td><td>pay-per-token API spend: one subscription, free tiers and local models</td><td class="src">ADR-016, ADR-032</td></tr>
       </tbody>
     </table>
@@ -262,10 +262,10 @@ footer a{color:var(--ink-2)}
       </div>
       <div class="layer arrow">
         <div class="l-name">Local surfaces, 127.0.0.1 only</div>
-        <div class="boxes"><span class="box">HUD<small>12 panels; token, origin and rate-limit middleware</small></span><span class="box">speech-aware overlay<small>idle, alert, linger, conversation</small></span><span class="box">Career Hub<small>rank, draft, review; no send path</small></span></div>
+        <div class="boxes"><span class="box">HUD<small>16 panels; token, origin and rate-limit middleware</small></span><span class="box">speech-aware overlay<small>idle, alert, linger, conversation</small></span><span class="box">Career Hub<small>rank, draft, review; no send path</small></span></div>
       </div>
       <div class="layer arrow">
-        <div class="l-name">Agents, run by 37 scheduled jobs and by voice</div>
+        <div class="l-name">Agents, run by 42 scheduled jobs and by voice</div>
         <div class="boxes"><span class="box hi">JARVIS 7 delegation tree<small>Chairman, 3 division leads, workers, + Arbiter (independent reviewer)</small></span><span class="box">10 domain agents<small>research, career, finance research, study, projects, filing, news, tech support, health checks</small></span><span class="box">Warden<small>security, tests, recovery: 15 min, daily, weekly, monthly</small></span><span class="box">Nova<small>nightly upgrade proposals, risk classes A / B / C</small></span></div>
       </div>
       <div class="layer arrow">
@@ -300,13 +300,13 @@ footer a{color:var(--ink-2)}
     <div>
       <div class="eyebrow">ADR-016 · ADR-018 · ADR-026 · ADR-032</div>
       <h3 style="margin-top:.4rem">Zero spend, by invariant</h3>
-      <p style="font-size:.95rem">One subscription, free-tier providers and a local model. The router walks up to 19 providers per call and, when every model is down, renders a deterministic template rather than going silent. A later proposal to add a paid rung was withdrawn and the invariant restored.</p>
-      <p style="font-size:.95rem">Sensitive data goes only to the subscription model or the local model. The one exception is an opt-in, per-call redacted path to two providers that contractually retain nothing, adopted after the research showed redaction is a leak-reducer rather than a blocker, with the residual risk written into the decision record.</p>
+      <p style="font-size:.95rem">One subscription, free-tier providers and a local model. The router walks up to 18 providers per call and, when every model is down, renders a deterministic template rather than going silent. A later proposal to add a paid rung was withdrawn and the invariant restored.</p>
+      <p style="font-size:.95rem">Sensitive data goes only to the subscription model or the local model. The one exception is an opt-in, per-call redacted path to three providers that contractually retain nothing, adopted after the research showed redaction is a leak-reducer rather than a blocker, with the residual risk written into the decision record.</p>
       <h3>An audit trail you can argue with</h3>
       <ul class="tight" style="font-size:.95rem">
         <li>Hash-chained activity log in Postgres: every action, in order, tamper-evident.</li>
         <li>33 decision records, from typography to "no paid rung".</li>
-        <li>30 incident post-mortems, including a planted-bug drill, a credentials-wipe outage, fabricated completion events and a chaos test that killed the workflow engine on purpose.</li>
+        <li>32 incident post-mortems, including a planted-bug drill, a credentials-wipe outage, fabricated completion events and a chaos test that killed the workflow engine on purpose.</li>
         <li>A lessons log fed mechanically by a hook from every agent's result contract, reviewed weekly, promoted or deleted.</li>
       </ul>
     </div>
@@ -356,7 +356,7 @@ footer a{color:var(--ink-2)}
         <li><b>Always-on wake word</b> (openWakeWord on ONNX), <b>local speech-to-text</b> (whisper.cpp) and <b>local text-to-speech</b> (Kokoro).</li>
         <li><b>A speech-aware overlay</b> with a four-state machine and a <b>media guard</b> that pauses or ducks whatever is playing, re-entrantly, with a 120-second watchdog so a crash can never leave the room muted.</li>
         <li><b>Screen questions.</b> "What's on my screen" captures, OCRs and describes the display, on request and only on request.</li>
-        <li><b>A local HUD</b> with twelve panels behind token, origin and rate-limit middleware; an ambient read-only view doubles as the wallpaper.</li>
+        <li><b>A local HUD</b> with sixteen panels behind token, origin and rate-limit middleware; an ambient read-only view doubles as the wallpaper.</li>
       </ul>
     </div>
     <div>
@@ -376,7 +376,7 @@ footer a{color:var(--ink-2)}
     <p class="lede">The largest subsystem, and the one closest to analyst and consulting work: a product-owned data pipeline that reads the Sydney market every day and drafts, but never sends.</p>
 
     <div class="pipe" aria-label="Pipeline stages, in order">
-      <div class="step"><span class="k">1</span><span class="t">Fetch</span>14 sources: aggregators, seven ATS vendors, a scraper, RSS alerts, newsletters, VC boards</div>
+      <div class="step"><span class="k">1</span><span class="t">Fetch</span>35 sources: job boards, aggregators, ATS vendors' public boards, a scraper, employer career pages, RSS alerts, newsletters, a VC board</div>
       <div class="step"><span class="k">2</span><span class="t">Normalise</span>one schema; duplicates merged across sources by fingerprint</div>
       <div class="step"><span class="k">3</span><span class="t">Firm intelligence</span>company-registry lookup, employer aliases, agency detection</div>
       <div class="step"><span class="k">4</span><span class="t">Classify</span>hours, unpaid, contract; a seniority guard for roles a student cannot get</div>
@@ -393,9 +393,9 @@ footer a{color:var(--ink-2)}
           <li>The profile file is the <b>only source the drafting pipeline may draw facts from</b>, and every drafting prompt carries a no-fabrication contract. A missing fact stays missing.</li>
           <li><b>Four independent submit guards</b>: a halt flag, an empty vendor allowlist, an evidence gate that measures form-fill quality per vendor, and payload-hash pinning. The system has never submitted an application and cannot.</li>
           <li>Content rules live in code and tests, not only in prompts: dash normalisation on every draft, and a seniority guard measured on the pool (40 of 52 senior-titled roles had slipped past the old pattern and sat above the internships).</li>
-          <li><b>Four closing signals</b> so dead roles stop scoring, including a link checker that treats a rate-limit response as "try again", after one vendor was made to look 95% dead by a 429.</li>
+          <li><b>Closing signals</b> so dead roles stop scoring, including a link checker that treats a rate-limit response as "try again", after one vendor was made to look 95% dead by a 429.</li>
         </ul>
-        <p class="mono" style="color:var(--ink-3);margin-top:1rem">9,566 ads · 7,182 scored · 166 firms · 21 pipeline modules · 11 fetchers · 26 agent modules · 38k lines of Python · 1,695 tests · an MCP server for agents</p>
+        <p class="mono" style="color:var(--ink-3);margin-top:1rem">48,627 ads · 18,751 scored · 284 employers · 44 pipeline modules · 35 fetchers · 28 agent modules · 49k lines of Python plus 49k of tests · 9,718 tests · an MCP server for agents</p>
       </div>
       <div>
         <h3 style="margin-top:0">What two reviews found</h3>
@@ -440,11 +440,11 @@ footer a{color:var(--ink-2)}
     <div>
       <div class="eyebrow">Stack</div>
       <div class="stack" style="margin-top:.9rem">
-        <div><b>Agents and models</b>Claude Code with per-agent tool scoping; a hand-rolled multi-provider router over 19 providers (ADR-019); a local Ollama tier; deterministic template fallbacks</div>
+        <div><b>Agents and models</b>Claude Code with per-agent tool scoping; a hand-rolled multi-provider router over 18 providers (ADR-019); a local Ollama tier; deterministic template fallbacks</div>
         <div><b>Voice</b>openWakeWord, whisper.cpp, Kokoro; Hammerspoon for the overlay and hotkeys</div>
         <div><b>Data</b>Postgres (hash-chained activity log, preference events); SQLite (Career Hub); an Obsidian vault under git with semantic and exact-match recall</div>
-        <div><b>Orchestration</b>macOS launchd, 37 jobs; n8n in Docker; a Python MCP server</div>
-        <div><b>Apps</b>a Next.js HUD; a single-file Career Hub front end with a jsPDF document generator; a Python career pipeline, 38k lines, 1,695 tests</div>
+        <div><b>Orchestration</b>macOS launchd, 42 jobs; n8n in Docker; a Python MCP server</div>
+        <div><b>Apps</b>a Next.js HUD; a single-file Career Hub front end with a jsPDF document generator; a Python career pipeline, 49k lines, 9,718 tests</div>
         <div><b>Safety and ops</b>deterministic hooks; restic and encrypted Postgres backups; OSV dependency scans; secrets scanning; chaos and restore drills; Warden every 15 minutes, daily, weekly, monthly</div>
       </div>
     </div>
