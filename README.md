@@ -77,7 +77,7 @@ flowchart TB
     T0["tier 0: subscription model"] --> T1["tiers 1 to 5: free-tier cloud providers<br/>(non-sensitive data only)"] --> T6["tier 6: local model (sensitive-safe)"] --> T7["deterministic templates<br/>(never silent)"]
   end
 
-  subgraph Rails["rails (only ever tightened)"]
+  subgraph Rails["rails (deny or meter, never grant)"]
     HOOKS["17 deterministic hooks: kill switch,<br/>budget gate, secrets guard, workspace guard"]
     GATES["human gates: send, delete, pay, trade"]
   end
@@ -97,7 +97,7 @@ flowchart TB
 Three design rules hold the whole thing together:
 
 1. **State lives in the vault or the database, never in an agent's memory.** If it is not written down, it did not happen as far as the next agent is concerned. Agents pass work to each other through notes, daily logs and Postgres.
-2. **Rails only get tighter.** Hooks are deterministic scripts that run before every tool call. They can deny or meter; they can never grant. No component runs with permission-bypass flags.
+2. **Rails move only on a human decision.** Hooks are deterministic scripts that run before every tool call. They can deny or meter; they can never grant. No component runs with permission-bypass flags. A limit changes only on a logged human decision: the agent caps raised for an overnight run in September 2026 stayed up for eleven weeks until a re-count caught them, and on 25 November 2026 they went back to their design values.
 3. **Completion claims are data, not facts.** After two fabricated "done" events in July, the rule became: trust only artefacts (ledger rows, audit lines, transcripts on disk), never a message's say-so.
 
 ---
@@ -118,13 +118,13 @@ Every computer-control action is registered in a versioned registry with its tie
 
 No agent or script calls `osascript` or Shortcuts directly. Everything goes through one gateway (`jarvis-do`) that does the registry lookup, the tier check, the mechanism call and the hash-chained log entry.
 
-### Hooks that only tighten
+### Hooks that deny or meter, never grant
 
 Seventeen hook scripts run deterministically around agent tool calls:
 
 - a **kill switch** that stops every agent on a single flag;
-- a **budget gate** that debits every agent spawn into a ledger *before* it runs and denies at the cap (60 per session, 8 concurrent, depth 3, 5 children per task);
-- a **tool-call gate** (8,000 calls per session) that turns every call into an "ask" past the cap: a conscious click-through when interactive, a cold stop for a headless runaway;
+- a **budget gate** that debits every agent spawn into a ledger *before* it runs and denies at the cap (15 per session, 4 concurrent, depth 3, 5 children per task);
+- a **tool-call gate** (500 calls per session) that turns every call into an "ask" past the cap: a conscious click-through when interactive, a cold stop for a headless runaway;
 - **secrets and workspace guards** that deny reads of `.env`, key files and `.git`, and writes outside the workspace;
 - a **protected-files guard** so no agent can edit the operating rules it runs under;
 - a **relay check** that flags any division lead who cites a health check the ledger shows never ran.
